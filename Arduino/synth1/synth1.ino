@@ -41,3 +41,15 @@ void loop() {
   delay(1);  // small scan delay
 }
 
+switch (expression) {
+    case constant1:
+        // Code to execute if expression matches constant1
+        break;
+    case constant2:
+        // Code to execute if expression matches constant2
+        break;
+    // ... more case statements
+    default:
+        // Code to execute if no case matches
+        break;
+}
