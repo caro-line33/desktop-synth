@@ -450,7 +450,7 @@
     "pinned_symbol_libs": []
   },
   "meta": {
-    "filename": "Desktop synth.kicad_pro",
+    "filename": "hi.kicad_pro",
     "version": 3
   },
   "net_settings": {
@@ -608,6 +608,11 @@
     "subpart_first_id": 65,
     "subpart_id_separator": 0
   },
-  "sheets": [],
+  "sheets": [
+    [
+      "fc9cc327-71e4-428b-bd20-7059fea148bf",
+      "Root"
+    ]
+  ],
   "text_variables": {}
 }
