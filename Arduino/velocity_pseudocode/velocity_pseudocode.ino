@@ -4,7 +4,8 @@
 #include <tuple>
 using namespace std;
 
-// All of the frequencies we want to use as output
+
+// All 128 MIDI note frequencies
 const vector<float> Tones = {
   8.18, 8.66, 9.18, 9.72, 10.30, 10.91, 11.56, 12.25, 12.98, 13.75, 14.57, 15.43,
   16.35, 17.32, 18.35, 19.45, 20.60, 21.83, 23.12, 24.50, 25.96, 27.50, 29.14, 30.87,
@@ -19,46 +20,22 @@ const vector<float> Tones = {
   8372.02, 8869.84, 9397.27, 9956.06, 10548.08, 11175.30, 11839.82, 12543.85
 };
 
+
 // Dictionary that takes in the row and collumn input and translates that to a single unique int
-const std::map<tuple<int,int>, int> note_identifier = {
-  {{11,3}, 0},
-  {{11,2}, 1},
-  {{11,1}, 2},
-  {{11,0}, 3},
-  {{11,32}, 4},
-  {{11,31}, 5},
-  {{11,30}, 6},
-  {{11,29}, 7},
-  {{9,3}, 8},
-  {{9,2}, 9},
-  {{9,1}, 10},
-  {{9,0}, 11},
-  {{9,32}, 12},
-  {{9,31}, 13},
-  {{9,30}, 14},
-  {{9,29}, 15},
-  {{7,3}, 16},
-  {{7,2}, 17},
-  {{7,1}, 18},
-  {{7,0}, 19},
-  {{7,32}, 20},
-  {{7,31}, 21},
-  {{7,30}, 22},
-  {{7,29}, 23},
+const std::unordered_map<tuple<int,int>, int> note_identifier = {
+  {{11,3}, 0}, {{11,2}, 1}, {{11,1}, 2}, {{11,0}, 3}, {{11,32}, 4}, {{11,31}, 5}, {{11,30}, 6}, {{11,29}, 7},
+  {{9,3}, 8}, {{9,2}, 9}, {{9,1}, 10}, {{9,0}, 11}, {{9,32}, 12}, {{9,31}, 13}, {{9,30}, 14}, {{9,29}, 15}, 
+  {{7,3}, 16}, {{7,2}, 17}, {{7,1}, 18}, {{7,0}, 19}, {{7,32}, 20}, {{7,31}, 21}, {{7,30}, 22}, {{7,29}, 23},
   {{4,3}, 24}
 };
 
-// === Pin assignments ===
 // These are the pins being scanned for input
-const uint8_t ROW_PINS[] = {0, 1, 2, 3, 4, 5, 6, 28, 29, 30, 31, 32};   // 10 rows
-const uint8_t COL_PINS[] = {24, 25, 26, 27, };            // 4 columns
-unit8_t = 24;
-// Derived counts
+const uint8_t ROW_PINS[] = {0, 1, 2, 3, 29, 30, 31, 32, 6}; // 10 rows
+const uint8_t COL_PINS[] = {4, 7, 9, 11}; // 4 columns
+
+// and their sizes
 const uint8_t NUM_ROWS = sizeof(ROW_PINS) / sizeof(ROW_PINS[0]);
 const uint8_t NUM_COLS = sizeof(COL_PINS) / sizeof(COL_PINS[0]);
-
-// Most keybeds are active-low (rows pulled up; drive one column LOW)
-const bool ACTIVE_LOW = true;
 
 // Scan timing 
 const uint16_t settle_us = 50;     // settle after driving a column
@@ -77,13 +54,6 @@ void setup() {
   Serial.begin(115200);
   delay(300);
 
-  Serial.println("Teensy keybed scan (custom pinout)");
-  Serial.print("ROWS (inputs): ");
-  for (uint8_t i = 0; i < NUM_ROWS; ++i) { Serial.print(ROW_PINS[i]); Serial.print(i+1<NUM_ROWS?", ":"\n"); }
-  Serial.print("COLS (drive):  ");
-  for (uint8_t i = 0; i < NUM_COLS; ++i) { Serial.print(COL_PINS[i]); Serial.print(i+1<NUM_COLS?", ":"\n"); }
-  Serial.print("Polarity: "); Serial.println(ACTIVE_LOW ? "ACTIVE_LOW" : "ACTIVE_HIGH");
-
   // Safe idle
   idleAllColsAsInputs();
   for (uint8_t r = 0; r < NUM_ROWS; ++r) {
@@ -94,20 +64,18 @@ void setup() {
   for (uint8_t r = 0; r < NUM_ROWS; ++r)
     for (uint8_t c = 0; c < NUM_COLS; ++c)
       lastState[r][c] = false;
-
-  Serial.println("Press keys to see pin pairs. Expect two hits per physical key (two contacts).");
 }
 
-void driveOneColumn(uint8_t cIdx) {
-  idleAllColsAsInputs();               // release others
+void driveOneColumn(uint8_t cIdx, bool bottom = False) {
+  idleAllColsAsInputs();
   pinMode(COL_PINS[cIdx], OUTPUT);
-  digitalWrite(COL_PINS[cIdx], ACTIVE_LOW ? LOW : HIGH); // drive selected column
+  digitalWrite(COL_PINS[cIdx] + bottom, LOW);
   delayMicroseconds(settle_us);
 }
 
 bool readRowPressed(uint8_t rIdx) {
   int v = digitalRead(ROW_PINS[rIdx]);
-  return ACTIVE_LOW ? (v == LOW) : (v == HIGH);
+  return (v == LOW);
 }
 
 void scanOnce() {
@@ -126,11 +94,10 @@ void scanOnce() {
         if (it != note_identifier.end()) {
           int index = it->second; 
           Serial.print("Index: "); Serial.print(index); // index for the big frequency data table
-          Serial.print(" Frequency: "); Serial.println(Tones[index + offset]);
+          Serial.print(" Frequency: "); Serial.println(Tones[index]);
         }
 
         // Display On press
-        Serial.print("Press: COL2 pin ")
         Serial.print("Press:  COL pin "); Serial.print(COL_PINS[c]); // Current collumn pin being detected
         Serial.print(" -> ROW pin "); Serial.println(ROW_PINS[r]); // Current row pin being detected
       } else if (!pressed && lastState[r][c]) {
@@ -142,6 +109,38 @@ void scanOnce() {
       lastState[r][c] = pressed;
     }
   }
+
+    for (uint8_t c = 0; c < NUM_COLS; ++c) {
+    driveOneColumn(c, bottom = True);
+
+    for (uint8_t r = 0; r < NUM_ROWS; ++r) {
+      bool pressed = readRowPressed(r);
+      int tempcol = COL_PINS[c];
+      int temprow = ROW_PINS[r];
+      
+      if (pressed && !lastState[r][c]) {
+
+        // After detecting the input pins, find the corresponding index then find the correct frequency
+        auto it = note_identifier.find({tempcol, temprow});
+        if (it != note_identifier.end()) {
+          int index = it->second; 
+          Serial.print("Index: "); Serial.print(index); // index for the big frequency data table
+          Serial.print(" Frequency: "); Serial.println(Tones[index]);
+        }
+
+        // Display On press
+        Serial.print("Press:  COL pin "); Serial.print(COL_PINS[c]); // Current collumn pin being detected
+        Serial.print(" -> ROW pin "); Serial.println(ROW_PINS[r]); // Current row pin being detected
+      } else if (!pressed && lastState[r][c]) {
+
+        // Display On release
+        Serial.print("Release: COL pin "); Serial.print(COL_PINS[c]);
+        Serial.print(" -> ROW pin "); Serial.println(ROW_PINS[r]);
+      }
+      lastState[r][c] = pressed;
+    }
+  }
+
   idleAllColsAsInputs();  // return to safe idle between scans
 }
 
