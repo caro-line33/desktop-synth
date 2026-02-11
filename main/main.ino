@@ -1,5 +1,5 @@
-#include <Arduino.h>
 #include "keyboard.h"
+#include "synth.h"
 #include "tones.h"
 
 int shift = 0; // adjust using rotary encoder

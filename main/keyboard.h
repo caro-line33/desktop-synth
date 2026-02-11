@@ -1,7 +1,7 @@
 #pragma once
 #include <Arduino.h>
 #include "tones.h"
-#include "synth.h"
+// #include "synth.h"
 #include <vector>
 #include <map>
 #include <tuple>

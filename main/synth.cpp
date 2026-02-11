@@ -46,23 +46,23 @@ static int findFreeVoice() {
 }
 
 void synthInit() {
-    AudioMemory(50);
+    AudioMemory(80);
 
     audioShield.enable();
-    audioShield.volume(1.0);
-    audioShield.lineOutLevel(27);
+    audioShield.volume(0.8);
+    audioShield.lineOutLevel(0);
 
     // All voices silent and sine by default
     for (int i = 0; i < NUM_VOICES; i++) {
-        voice[i].begin(0.0, 440, WAVEFORM_SINE);
+        voice[i].begin(0.0, 0, WAVEFORM_SINE);
         vs[i] = VoiceState();  // reset
     }
 
     // Mixer gains
-    for (int i = 0; i < 4; i++) mix1.gain(i, 0.5);
-    for (int i = 0; i < 4; i++) mix2.gain(i, 0.5);
-    mixFinal.gain(0, 0.7);
-    mixFinal.gain(1, 0.7);
+    for (int i = 0; i < 4; i++) mix1.gain(i, 0.1);
+    for (int i = 0; i < 4; i++) mix2.gain(i, 0.1);
+    mixFinal.gain(0, 1.0);
+    mixFinal.gain(1, 1.0);
 }
 
 void noteOn(int noteIndex, float freq) {
@@ -71,13 +71,13 @@ void noteOn(int noteIndex, float freq) {
     vs[v].freq = freq;
     vs[v].noteIndex = noteIndex;
     voice[v].frequency(freq);
-    voice[v].amplitude(0.7);
+    voice[v].amplitude(1.0);
 }
 
 void noteOff(int noteIndex) {
     for (int v = 0; v < NUM_VOICES; v++) {
         if (vs[v].active && vs[v].noteIndex == noteIndex) {
-            voice[v].amplitude(0);
+            voice[v].begin(0, 0, WAVEFORM_SINE);
             vs[v].active = false;
         }
     }
